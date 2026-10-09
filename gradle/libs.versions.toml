@@ -11,6 +11,7 @@ composeBom = "2026.08.00"
 #Add
 kspPluginVersion = "2.3.6"
 gsonVerson = "2.14.0"
+vanniktechMavenPublish = "0.37.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,4 +38,5 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 # Add
 plugin-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 plugin-ksp = { id = "com.google.devtools.ksp", version.ref = "kspPluginVersion" }
+plugin-maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktechMavenPublish" }
 

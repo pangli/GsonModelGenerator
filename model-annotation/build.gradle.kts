@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.plugin.kotlin.jvm)
+    alias(libs.plugins.plugin.maven.publish)
 }
 
 java {
@@ -13,4 +14,9 @@ kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
     }
+}
+
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
 }

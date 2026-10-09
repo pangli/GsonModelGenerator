@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.plugin.kotlin.jvm)
+    alias(libs.plugins.plugin.maven.publish)
 }
 
 java {
@@ -17,10 +18,15 @@ kotlin {
 
 dependencies {
     implementation(project(":model-annotation"))
-    implementation(libs.symbol.processing.api)
+    compileOnly(libs.symbol.processing.api)
     testImplementation(libs.junit)
 }
 
 tasks.test {
     useJUnit()
+}
+
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
 }

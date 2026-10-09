@@ -5,4 +5,5 @@ plugins {
     // Add
     alias(libs.plugins.plugin.ksp) apply false
     alias(libs.plugins.plugin.kotlin.jvm) apply false
+    alias(libs.plugins.plugin.maven.publish) apply false
 }
