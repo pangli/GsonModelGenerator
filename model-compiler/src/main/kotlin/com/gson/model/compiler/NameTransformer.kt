@@ -55,7 +55,7 @@ internal object NameTransformer {
                 '\n' -> append("\\n")
                 '\r' -> append("\\r")
                 '\t' -> append("\\t")
-                '$' -> append("\\\$")
+                '$' -> append("\\$")
                 else -> append(char)
             }
         }

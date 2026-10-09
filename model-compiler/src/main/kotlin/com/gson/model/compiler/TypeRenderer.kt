@@ -10,9 +10,8 @@ internal class TypeRenderer(
     private val targetPackage: String,
 ) {
     private val bound = linkedMapOf<String, String>()
-    private val imported = linkedSetOf<String>()
-
-    val imports: Set<String> get() = imported
+    val imports: Set<String>
+        field = linkedSetOf<String>()
 
     fun render(type: KSType): String {
         if (type.isError) {
@@ -48,7 +47,7 @@ internal class TypeRenderer(
         val previous = bound[simple]
         if (previous != null && previous != qualified) return qualified
         bound[simple] = qualified
-        if (shouldImport(qualified, targetPackage)) imported += qualified
+        if (shouldImport(qualified, targetPackage)) imports += qualified
         return simple
     }
 

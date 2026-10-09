@@ -40,7 +40,6 @@ internal class KotlinSource(private val text: String) {
                 index = skipped
                 continue
             }
-            if (index >= span.last) break
             when (text[index]) {
                 '(' -> paren++
                 ')' -> if (paren == 0) return cleanClause(text.substring(start, index)) else paren--
@@ -136,7 +135,7 @@ internal class KotlinSource(private val text: String) {
                 val nameAt = skipTrivia(index + word.length)
                 if (peekIdent(nameAt) == typeName) return nameAt
             }
-            index += if (word != null) word.length else 1
+            index += word?.length ?: 1
         }
         return null
     }
@@ -154,7 +153,7 @@ internal class KotlinSource(private val text: String) {
                 val nameAt = skipTrivia(index + word.length)
                 if (peekIdent(nameAt) == memberName) return nameAt + memberName.length
             }
-            index += if (word != null) word.length else 1
+            index += word?.length ?: 1
         }
         return null
     }
