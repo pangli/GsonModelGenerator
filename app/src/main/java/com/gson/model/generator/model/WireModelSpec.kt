@@ -18,8 +18,8 @@ abstract class DemoChild(
 
 @GenModel(classSuffix = "Wire")
 abstract class DemoLogin(
-    val phone: String,
-    val children: List<DemoChild>? = null,
+    var phone: String,
+    var children: List<DemoChild>? = null,
     @WireField(raw = "clientTag")
     val tag: String? = null,
     var note: String? = null,
