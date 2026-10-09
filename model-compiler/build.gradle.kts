@@ -18,7 +18,9 @@ kotlin {
 
 dependencies {
     implementation(project(":model-annotation"))
+    compileOnly(kotlin("stdlib"))
     compileOnly(libs.symbol.processing.api)
+    testImplementation(kotlin("stdlib"))
     testImplementation(libs.junit)
 }
 

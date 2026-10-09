@@ -16,6 +16,10 @@ kotlin {
     }
 }
 
+dependencies {
+    compileOnly(kotlin("stdlib"))
+}
+
 mavenPublishing {
     publishToMavenCentral()
     signAllPublications()
