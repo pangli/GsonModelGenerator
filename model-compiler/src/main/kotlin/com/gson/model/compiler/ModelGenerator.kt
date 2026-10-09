@@ -473,9 +473,9 @@ internal class ModelGenerator(
         if (explicit == null || explicit == MODEL_UNSET) fallback else explicit
 
     private companion object {
-        const val GEN_MODEL = "com.sparrow.model.annotation.GenModel"
-        const val WIRE_FIELD = "com.sparrow.model.annotation.WireField"
-        const val ENCODER_INTERFACE = "com.sparrow.model.annotation.SerializedNameEncoder"
+        const val GEN_MODEL = "com.gson.model.annotation.GenModel"
+        const val WIRE_FIELD = "com.gson.model.annotation.WireField"
+        const val ENCODER_INTERFACE = "com.gson.model.annotation.SerializedNameEncoder"
     }
 }
 
