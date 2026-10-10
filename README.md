@@ -8,6 +8,8 @@
 
 ## 依赖
 
+**最低要求：** Kotlin **2.2+**（含 AGP 9.0 起 `android.builtInKotlin=true` 内置的 Kotlin）。发布产物以 `languageVersion` / `apiVersion` 2.2 编译，避免被更高工具链打上过新的 Kotlin metadata。
+
 使用方需要自己的 KSP 插件，版本与工程的 Kotlin 编译器一致。
 
 ```kotlin

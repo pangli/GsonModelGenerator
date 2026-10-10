@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     alias(libs.plugins.plugin.kotlin.jvm)
@@ -13,6 +14,9 @@ java {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
+        // Keep metadata readable by AGP 9.0 built-in Kotlin (~2.2.x).
+        languageVersion.set(KotlinVersion.KOTLIN_2_2)
+        apiVersion.set(KotlinVersion.KOTLIN_2_2)
     }
 }
 
