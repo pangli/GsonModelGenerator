@@ -22,9 +22,9 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GsonModelGenerator"
+rootProject.name = "WireGen"
 include(":app")
-include(":model-annotation")
-include(":model-compiler")
-include(":model-encoder")
+include(":wire-annotation")
+include(":wire-compiler")
+include(":wire-encoder")
  

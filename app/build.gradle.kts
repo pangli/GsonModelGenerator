@@ -6,27 +6,27 @@ plugins {
 }
 
 ksp {
-    arg("model.classPrefix", "Sparrow")
-    arg("model.paramSuffix", "BySparrow")
-    arg("model.nameRule", "base64")
-    arg("model.xorKey", "bd")
+    arg("wire.classPrefix", "Sparrow")
+    arg("wire.model.paramSuffix", "BySparrow")
+    arg("wire.model.nameRule", "base64")
+    arg("wire.model.xorKey", "bd")
     arg(
-        "model.dict",
+        "wire.model.dict",
         layout.projectDirectory.file("wire-names.properties").asFile.absolutePath,
     )
     // Prefer an absolute path under build/ so the mapping is not packaged into the APK.
     // "true" writes to generated KSP resources (can be packaged — avoid for release).
     arg(
-        "model.mappingFile",
+        "wire.model.mappingFile",
         layout.buildDirectory.file("outputs/model-wire-mapping.json").get().asFile.absolutePath,
     )
-    arg("path.nameRule", "dict")
+    arg("wire.path.nameRule", "dict")
     arg(
-        "path.dict",
+        "wire.path.dict",
         layout.projectDirectory.file("path-names.properties").asFile.absolutePath,
     )
     arg(
-        "path.mappingFile",
+        "wire.path.mappingFile",
         layout.buildDirectory.file("outputs/path-mapping.json").get().asFile.absolutePath,
     )
 }
@@ -36,13 +36,13 @@ tasks.matching { it.name.startsWith("ksp") && it.name.endsWith("Kotlin") }.confi
     inputs.file(layout.projectDirectory.file("path-names.properties"))
 }
 android {
-    namespace = "com.gson.model.generator"
+    namespace = "com.wiregen.sample"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.gson.model.generator"
+        applicationId = "com.wiregen.sample"
         minSdk = 26
         targetSdk = 37
         versionCode = 1
@@ -99,10 +99,10 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     //Add
     implementation(libs.gson)
-    implementation(project(":model-annotation"))
-    compileOnly(project(":model-encoder"))
-    ksp(project(":model-compiler"))
-    ksp(project(":model-encoder"))
-//    implementation("io.github.pangli:model-annotation:1.0.1")
-//    ksp("io.github.pangli:model-compiler:1.0.1")
+    implementation(project(":wire-annotation"))
+    compileOnly(project(":wire-encoder"))
+    ksp(project(":wire-compiler"))
+    ksp(project(":wire-encoder"))
+//    implementation("io.github.pangli:wire-annotation:2.0.0")
+//    ksp("io.github.pangli:wire-compiler:2.0.0")
 }
