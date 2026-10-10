@@ -213,9 +213,59 @@ arg("model.nameEncoder", "com.example.PrefixNameEncoder")
 
 `encode` 抛异常或返回空字符串时，该规格生成失败。
 
+## API 路径常量
+
+对 `object` 上的 `const val String` 做编译期路径混淆，用法与 `@GenModel` 对称。
+
+```kotlin
+@GenApiConstants
+object ApiConstants {
+    const val GET_APP_CONFIG_PATH: String = "api/app/ext/config/getApp"
+
+    @ApiPath(raw = "healthz")
+    const val HEALTH_PATH: String = "api/health"
+}
+```
+
+在 `model.classPrefix = Sparrow`、`path.nameRule = dict` 且字典含各 path 段时，生成：
+
+```kotlin
+object SparrowApiConstants {
+    const val GET_APP_CONFIG_PATH: String = "e/squill/nance/yew/lentil" // api/app/ext/config/getApp
+    const val HEALTH_PATH: String = "healthz" // api/health
+}
+```
+
+默认按 `/` **分段**编码（`path.encodeMode=segment`）；`whole` 则对整条路径一次编码。空段（首尾 `/`、`//`）会保留。
+
+| 参数 | 作用 |
+| --- | --- |
+| `path.classPrefix` / `path.classSuffix` / `path.packageName` | 生成 object 名与包。未配置时回退到对应 `model.*` |
+| `path.nameRule` | `raw` / `base64` / `reverse` / `xor` / `dict`，默认 `raw` |
+| `path.nameEncoder` | 自定义算法全限定类名（与模型共用 `SerializedNameEncoder`） |
+| `path.xorKey` | 未配时回退 `model.xorKey` |
+| `path.dict` | `dict` 用的 properties（键是 path 段或整段，取决于 encodeMode） |
+| `path.mappingFile` | 对照 JSON，建议写到 `build/` 绝对路径 |
+| `path.encodeMode` | `segment`（默认）或 `whole` |
+
+选择顺序与模型侧相同：`ApiPath.raw` → 规格 `pathEncoder` → 规格显式 `pathRule` → 全局 `path.nameEncoder` → 全局 `path.nameRule`。
+
+对照 JSON 示例（`path.mappingFile`）：
+
+```json
+{
+  "com.example.SparrowApiConstants": {
+    "source": "com.example.ApiConstants",
+    "paths": [
+      { "name": "GET_APP_CONFIG_PATH", "semantic": "api/app/ext/config/getApp", "wire": "e/squill/nance/yew/lentil" }
+    ]
+  }
+}
+```
+
 ## 本仓库示例
 
-规格在 `app/src/main/java/com/gson/model/generator/model/WireModelSpec.kt`。全局参数在 `app/build.gradle.kts`。字典在 `app/wire-names.properties`。示例编码器是 `:model-encoder` 的 `PrefixNameEncoder`。
+规格在 `app/src/main/java/com/gson/model/generator/model/WireModelSpec.kt` 与 `ApiConstants.kt`。全局参数在 `app/build.gradle.kts`。字典在 `app/wire-names.properties` 与 `app/path-names.properties`。示例编码器是 `:model-encoder` 的 `PrefixNameEncoder`。
 
 ## 限制
 
@@ -224,3 +274,4 @@ arg("model.nameEncoder", "com.example.PrefixNameEncoder")
 - 生成类里的参数名如果挡住父类成员，会报错。
 - 同一简单类名冲突时，后出现的类型会保留全限定名。
 - `@SerializedName` 的值在生成后就是普通字符串，R8 不会改写注解里的值。
+- `@GenApiConstants` 只支持 `object` 里的 `const val String = "..."` 字面量，不支持引用其它常量。

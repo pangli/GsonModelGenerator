@@ -20,10 +20,20 @@ ksp {
         "model.mappingFile",
         layout.buildDirectory.file("outputs/model-wire-mapping.json").get().asFile.absolutePath,
     )
+    arg("path.nameRule", "dict")
+    arg(
+        "path.dict",
+        layout.projectDirectory.file("path-names.properties").asFile.absolutePath,
+    )
+    arg(
+        "path.mappingFile",
+        layout.buildDirectory.file("outputs/path-mapping.json").get().asFile.absolutePath,
+    )
 }
 
 tasks.matching { it.name.startsWith("ksp") && it.name.endsWith("Kotlin") }.configureEach {
     inputs.file(layout.projectDirectory.file("wire-names.properties"))
+    inputs.file(layout.projectDirectory.file("path-names.properties"))
 }
 android {
     namespace = "com.gson.model.generator"

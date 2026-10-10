@@ -2,6 +2,7 @@ package com.gson.model.compiler
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Base64
@@ -53,6 +54,31 @@ class NameTransformerTest {
         assertEquals(
             "\"a\\\"b\\\$c\"",
             NameTransformer.kotlinStringLiteral("a\"b\$c"),
+        )
+    }
+
+    @Test
+    fun parseKotlinStringLiteralRoundTrips() {
+        val original = "api/app/ext"
+        assertEquals(
+            original,
+            NameTransformer.parseKotlinStringLiteral(NameTransformer.kotlinStringLiteral(original)),
+        )
+        assertEquals("a\"b", NameTransformer.parseKotlinStringLiteral("\"a\\\"b\""))
+        assertNull(NameTransformer.parseKotlinStringLiteral("OTHER_PATH"))
+    }
+
+    @Test
+    fun encodePathAppliesPerSegment() {
+        val encoded = NameTransformer.encodePath("api/app/ext", "segment") { it.reversed() }
+        assertEquals("ipa/ppa/txe", encoded)
+        assertEquals(
+            "/api/app/",
+            NameTransformer.encodePath("/api/app/", "segment") { it },
+        )
+        assertEquals(
+            "cGhvbmU=",
+            NameTransformer.encodePath("phone", "whole") { "cGhvbmU=" },
         )
     }
 }

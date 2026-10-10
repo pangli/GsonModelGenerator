@@ -1,7 +1,6 @@
 package com.gson.model.compiler
 
 import com.google.devtools.ksp.getDeclaredProperties
-import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
@@ -10,25 +9,61 @@ import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFile
+import com.gson.model.annotation.GenApiConstants
 import com.gson.model.annotation.GenModel
-import java.io.OutputStreamWriter
-import java.nio.charset.StandardCharsets
-import kotlin.io.FileAlreadyExistsException
 
 class ModelProcessor(
     private val environment: SymbolProcessorEnvironment,
 ) : SymbolProcessor {
-    private val written = mutableSetOf<String>()
-    private val mappingsByGenerated = linkedMapOf<String, WireClassMapping>()
-    private val mappingOrigins = linkedSetOf<KSFile>()
-    private var options: ModelOptions? = null
+    private val writtenModels = mutableSetOf<String>()
+    private val writtenPaths = mutableSetOf<String>()
+    private val wireMappings = linkedMapOf<String, WireClassMapping>()
+    private val pathMappings = linkedMapOf<String, PathObjectMapping>()
+    private val wireOrigins = linkedSetOf<KSFile>()
+    private val pathOrigins = linkedSetOf<KSFile>()
+    private var modelOptions: ModelOptions? = null
+    private var pathOptions: PathOptions? = null
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
+        val deferred = mutableListOf<KSAnnotated>()
+        deferred += processModels(resolver)
+        deferred += processApiConstants(resolver)
+        return deferred
+    }
+
+    override fun finish() {
+        val modelOptions = modelOptions
+        if (modelOptions != null && modelOptions.mappingEnabled() && wireMappings.isNotEmpty()) {
+            MappingFiles.write(
+                environment.codeGenerator,
+                environment.logger,
+                modelOptions.mappingFile,
+                "model-wire-mapping",
+                wireOrigins,
+                WireMappingJson.render(wireMappings.values.toList()),
+                ModelOptionKeys.MAPPING_FILE,
+            )
+        }
+        val pathOptions = pathOptions
+        if (pathOptions != null && pathOptions.mappingEnabled() && pathMappings.isNotEmpty()) {
+            MappingFiles.write(
+                environment.codeGenerator,
+                environment.logger,
+                pathOptions.mappingFile,
+                "path-mapping",
+                pathOrigins,
+                PathMappingJson.render(pathMappings.values.toList()),
+                PathOptionKeys.MAPPING_FILE,
+            )
+        }
+    }
+
+    private fun processModels(resolver: Resolver): List<KSAnnotated> {
         val symbols = resolver.getSymbolsWithAnnotation(GenModel::class.qualifiedName!!).toList()
         if (symbols.isEmpty()) return emptyList()
 
         val options = ModelOptions.from(environment.options)
-        this.options = options
+        modelOptions = options
         val dict = try {
             options.loadDict()
         } catch (error: IllegalArgumentException) {
@@ -64,53 +99,68 @@ class ModelProcessor(
                 resolver,
                 options,
                 dict,
-                written,
+                writtenModels,
             ).generate(ready)
             if (options.mappingEnabled()) {
                 generated.forEach { mapping ->
-                    mappingsByGenerated[mapping.generated] = mapping
+                    wireMappings[mapping.generated] = mapping
                 }
-                ready.mapNotNullTo(mappingOrigins) { it.containingFile }
+                ready.mapNotNullTo(wireOrigins) { it.containingFile }
             }
         }
         return deferred
     }
 
-    override fun finish() {
-        val options = options ?: return
-        if (!options.mappingEnabled() || mappingsByGenerated.isEmpty()) return
-        val json = WireMappingJson.render(mappingsByGenerated.values.toList())
-        val path = options.mappingOutputFile()
-        if (path != null) {
-            try {
-                path.parentFile?.mkdirs()
-                path.writeText(json, Charsets.UTF_8)
-            } catch (error: Exception) {
-                environment.logger.error(
-                    "failed to write model.mappingFile ${path.absolutePath}: ${error.message}",
-                )
-            }
-            return
-        }
-        val origins = mappingOrigins.toTypedArray()
-        try {
-            environment.codeGenerator.createNewFile(
-                Dependencies(aggregating = true, *origins),
-                "",
-                DEFAULT_MAPPING_NAME,
-                "json",
-            ).use { stream ->
-                OutputStreamWriter(stream, StandardCharsets.UTF_8).use { writer ->
-                    writer.write(json)
-                }
-            }
-        } catch (error: FileAlreadyExistsException) {
-            error.file.writeText(json)
-        }
-    }
+    private fun processApiConstants(resolver: Resolver): List<KSAnnotated> {
+        val symbols = resolver.getSymbolsWithAnnotation(GenApiConstants::class.qualifiedName!!).toList()
+        if (symbols.isEmpty()) return emptyList()
 
-    private companion object {
-        const val DEFAULT_MAPPING_NAME = "model-wire-mapping"
+        val options = PathOptions.from(environment.options)
+        pathOptions = options
+        val dict = try {
+            options.loadDict()
+        } catch (error: IllegalArgumentException) {
+            environment.logger.error(error.message ?: "failed to load path.dict")
+            return emptyList()
+        }
+
+        val deferred = mutableListOf<KSAnnotated>()
+        val ready = mutableListOf<KSClassDeclaration>()
+        symbols.forEach { symbol ->
+            val declaration = symbol as? KSClassDeclaration
+            if (declaration == null) {
+                environment.logger.error("@GenApiConstants is only allowed on an object", symbol)
+                return@forEach
+            }
+            if (declaration.classKind != ClassKind.OBJECT) {
+                environment.logger.error("@GenApiConstants only supports object declarations", declaration)
+                return@forEach
+            }
+            val unresolved = declaration.getDeclaredProperties().any { property ->
+                property.type.resolve().isError
+            }
+            if (unresolved) {
+                deferred += declaration
+            } else {
+                ready += declaration
+            }
+        }
+        if (ready.isNotEmpty()) {
+            val generated = ApiConstantsGenerator(
+                environment.codeGenerator,
+                environment.logger,
+                options,
+                dict,
+                writtenPaths,
+            ).generate(ready)
+            if (options.mappingEnabled()) {
+                generated.forEach { mapping ->
+                    pathMappings[mapping.generated] = mapping
+                }
+                ready.mapNotNullTo(pathOrigins) { it.containingFile }
+            }
+        }
+        return deferred
     }
 }
 
