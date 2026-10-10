@@ -43,6 +43,11 @@ ksp {
     arg("model.nameEncoder", "")    // 编码器的全限定类名
     arg("model.xorKey", "bd")
     arg("model.dict", layout.projectDirectory.file("wire-names.properties").asFile.absolutePath)
+    // 建议写绝对路径到 build/ 下，避免对照表被打进 APK；true 会进 generated resources
+    arg(
+        "model.mappingFile",
+        layout.buildDirectory.file("outputs/model-wire-mapping.json").get().asFile.absolutePath,
+    )
 }
 ```
 
@@ -64,6 +69,7 @@ tasks.matching { it.name.startsWith("ksp") && it.name.endsWith("Kotlin") }.confi
 | `model.nameEncoder` | 全局自定义算法的全限定类名 |
 | `model.xorKey` | `xor` 使用的密钥 |
 | `model.dict` | `dict` 使用的 properties 文件绝对路径 |
+| `model.mappingFile` | 编译结束写出语义名 ↔ `@SerializedName` 对照 JSON。建议给 `build/` 下绝对路径（不会进 APK）。`true` 写到 `build/generated/ksp/<variant>/resources/model-wire-mapping.json`（可能被打包，仅调试用）；空或 `false` 关闭 |
 
 ## 编写规格
 
@@ -96,6 +102,21 @@ data class SparrowDemoLoginWire(
 ```
 
 生成文件在 `app/build/generated/ksp/<variant>/kotlin/` 下，与规格同一个包（除非设置了 `model.packageName`）。嵌套规格使用短名和 `import`，不写全限定名。
+
+开启 `model.mappingFile` 后，还会生成一份对照 JSON（路径由该参数决定），结构如下：
+
+```json
+{
+  "com.example.SparrowDemoLoginWire": {
+    "source": "com.example.DemoLogin",
+    "fields": [
+      { "semantic": "phone", "param": "phoneBySparrow", "wire": "cGhvbmU" }
+    ]
+  }
+}
+```
+
+`semantic` 是参与算法的语义名，`param` 是生成构造参数名，`wire` 是最终 `@SerializedName`。
 
 可空且没有默认值的属性生成 `= null`。没有 `=`、也不可空、又不是构造参数默认值的属性，不生成默认值。
 

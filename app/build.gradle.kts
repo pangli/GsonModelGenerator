@@ -14,6 +14,12 @@ ksp {
         "model.dict",
         layout.projectDirectory.file("wire-names.properties").asFile.absolutePath,
     )
+    // Prefer an absolute path under build/ so the mapping is not packaged into the APK.
+    // "true" writes to generated KSP resources (can be packaged — avoid for release).
+    arg(
+        "model.mappingFile",
+        layout.buildDirectory.file("outputs/model-wire-mapping.json").get().asFile.absolutePath,
+    )
 }
 
 tasks.matching { it.name.startsWith("ksp") && it.name.endsWith("Kotlin") }.configureEach {
@@ -87,4 +93,6 @@ dependencies {
     compileOnly(project(":model-encoder"))
     ksp(project(":model-compiler"))
     ksp(project(":model-encoder"))
+//    implementation("io.github.pangli:model-annotation:1.0.1")
+//    ksp("io.github.pangli:model-compiler:1.0.1")
 }

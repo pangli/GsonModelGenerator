@@ -27,6 +27,7 @@ const val MODEL_UNSET = "__MODEL_UNSET__"
  *     arg("model.nameEncoder", "com.example.MyEncoder")
  *     arg("model.xorKey", "bd")
  *     arg("model.dict", file("wire-names.properties").absolutePath)
+ *     arg("model.mappingFile", file("build/outputs/model-wire-mapping.json").absolutePath)
  * }
  * ```
  *

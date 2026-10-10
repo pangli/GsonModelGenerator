@@ -30,18 +30,41 @@ internal class ModelGenerator(
     private val dict: Map<String, String>,
     private val written: MutableSet<String>,
 ) {
-    fun generate(classes: List<KSClassDeclaration>) {
+    fun generate(classes: List<KSClassDeclaration>): List<WireClassMapping> {
         val annotated = classes.mapNotNull { it.qualifiedName?.asString() }.toSet()
         val identities = uniqueIdentities(classes.mapNotNull(::identity))
         val generatedBySource = identities.associate { identity ->
             identity.sourceQualified to "${identity.packageName}.${identity.className}"
         }
+        val mappings = mutableListOf<WireClassMapping>()
         identities.forEach { identity ->
             val spec = parse(identity) ?: return@forEach
             val renderer = TypeRenderer(generatedBySource, annotated, identity.packageName)
             val source = renderSource(spec, renderer) ?: return@forEach
             write(spec, source)
+            mappings += wireMapping(spec)
         }
+        return mappings
+    }
+
+    private fun wireMapping(spec: ModelSpec): WireClassMapping {
+        val identity = spec.identity
+        val generated = if (identity.packageName.isEmpty()) {
+            identity.className
+        } else {
+            "${identity.packageName}.${identity.className}"
+        }
+        return WireClassMapping(
+            source = identity.sourceQualified,
+            generated = generated,
+            fields = spec.fields.map { field ->
+                WireFieldMapping(
+                    semantic = field.semantic,
+                    param = field.paramName,
+                    wire = field.wireName,
+                )
+            },
+        )
     }
 
     private fun identity(declaration: KSClassDeclaration): ModelIdentity? {
