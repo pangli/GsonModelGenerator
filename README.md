@@ -1,14 +1,14 @@
 # WireGen
 
-编译期根据规格生成 Gson `data class` 与 API 路径常量。属性名 / 常量名保持可读，wire 字符串（`@SerializedName`、路径）在生成时就算好。规格本身不会变成运行时 API。
+编译期根据规格生成 Gson `data class` 与 API 路径常量。属性名 / 常量名保持可读，wire 字符串（
+`@SerializedName`、路径）在生成时就算好。规格本身不会变成运行时 API。
 
-**2.0.0 相对 1.0.1（`model-annotation` / `model-compiler`）为硬切换**，无旧包名或旧 artifact 兼容层。
-
-运行时使用生成类型，例如 `SparrowDemoLoginWire`、`SparrowApiConstants`，不要使用带 `@GenModel` / `@GenApiConstants` 的规格。
+运行时使用生成类型，例如 `SparrowDemoLoginWire`、`SparrowApiConstants`，不要使用带 `@GenModel` /
+`@GenApiConstants` 的规格。
 
 ## 依赖
 
-使用方需要自己的 KSP 插件，版本与工程的 Kotlin 编译器一致。本库不传递 `kotlin-stdlib`。
+使用方需要自己的 KSP 插件，版本与工程的 Kotlin 编译器一致。
 
 ```kotlin
 plugins {
@@ -28,25 +28,6 @@ implementation(project(":wire-annotation"))
 ksp(project(":wire-compiler"))
 ```
 
-### 从 1.0.1 迁移
-
-```kotlin
-// 旧 1.0.1
-implementation("io.github.pangli:model-annotation:1.0.1")
-ksp("io.github.pangli:model-compiler:1.0.1")
-arg("model.classPrefix", "Sparrow")
-arg("model.nameRule", "base64")
-
-// 新 2.0.0
-implementation("io.github.pangli:wire-annotation:2.0.0")
-ksp("io.github.pangli:wire-compiler:2.0.0")
-arg("wire.classPrefix", "Sparrow")
-arg("wire.model.nameRule", "base64")
-arg("wire.path.nameRule", "dict")
-```
-
-代码侧：`import com.wiregen.annotation.*`；`SerializedNameRule` → `WireNameRule`；`SerializedNameEncoder` → `WireNameEncoder`。注解类名 `@GenModel` / `@WireField` / `@GenApiConstants` / `@ApiPath` 不变。
-
 ## 全局参数
 
 写在使用方的 `ksp { }` 里。单个规格上的同名参数会覆盖它们。注解参数没写时走这里；显式传入空字符串会覆盖全局值，表示不使用该配置。
@@ -63,7 +44,10 @@ ksp {
     arg("wire.model.nameRule", "base64") // raw、base64、reverse、xor、dict
     arg("wire.model.nameEncoder", "")    // 编码器的全限定类名
     arg("wire.model.xorKey", "bd")
-    arg("wire.model.dict", layout.projectDirectory.file("wire-names.properties").asFile.absolutePath)
+    arg(
+        "wire.model.dict",
+        layout.projectDirectory.file("wire-names.properties").asFile.absolutePath
+    )
     // 建议写绝对路径到 build/ 下，避免对照表被打进 APK；true 会进 generated resources
     arg(
         "wire.model.mappingFile",
@@ -80,17 +64,17 @@ tasks.matching { it.name.startsWith("ksp") && it.name.endsWith("Kotlin") }.confi
 }
 ```
 
-| 参数 | 作用 |
-| --- | --- |
-| `wire.classPrefix` / `wire.classSuffix` | 生成类/object 名 = 前缀 + 规格简单名 + 后缀（模型与路径共享） |
-| `wire.packageName` | 生成类型所在包。空字符串表示与规格同一个包 |
-| `wire.model.paramPrefix` / `wire.model.paramSuffix` | 生成参数名。前缀非空时，语义名首字母大写 |
-| `wire.model.superClass` / `wire.model.superArgs` | 规格没有写父类时使用。`superArgs` 原样放进父类构造括号 |
-| `wire.model.nameRule` | 默认算法。没配时等价于 `raw` |
-| `wire.model.nameEncoder` | 全局自定义算法的全限定类名 |
-| `wire.model.xorKey` | `xor` 使用的密钥 |
-| `wire.model.dict` | `dict` 使用的 properties 文件绝对路径 |
-| `wire.model.mappingFile` | 编译结束写出语义名 ↔ `@SerializedName` 对照 JSON。建议给 `build/` 下绝对路径（不会进 APK）。`true` 写到 generated resources（可能被打包，仅调试用）；空或 `false` 关闭 |
+| 参数                                                | 作用                                                                                                                                                                   |
+|-----------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `wire.classPrefix` / `wire.classSuffix`             | 生成类/object 名 = 前缀 + 规格简单名 + 后缀（模型与路径共享）                                                                                                          |
+| `wire.packageName`                                  | 生成类型所在包。空字符串表示与规格同一个包                                                                                                                             |
+| `wire.model.paramPrefix` / `wire.model.paramSuffix` | 生成参数名。前缀非空时，语义名首字母大写                                                                                                                               |
+| `wire.model.superClass` / `wire.model.superArgs`    | 规格没有写父类时使用。`superArgs` 原样放进父类构造括号                                                                                                                 |
+| `wire.model.nameRule`                               | 默认算法。没配时等价于 `raw`                                                                                                                                           |
+| `wire.model.nameEncoder`                            | 全局自定义算法的全限定类名                                                                                                                                             |
+| `wire.model.xorKey`                                 | `xor` 使用的密钥                                                                                                                                                       |
+| `wire.model.dict`                                   | `dict` 使用的 properties 文件绝对路径                                                                                                                                  |
+| `wire.model.mappingFile`                            | 编译结束写出语义名 ↔ `@SerializedName` 对照 JSON。建议给 `build/` 下绝对路径（不会进 APK）。`true` 写到 generated resources（可能被打包，仅调试用）；空或 `false` 关闭 |
 
 ## 编写模型规格
 
@@ -107,7 +91,8 @@ abstract class DemoLogin(
 ) : BaseRequest()
 ```
 
-在 `wire.classPrefix = Sparrow`、`wire.model.paramSuffix = BySparrow`、`wire.model.nameRule = base64` 时，生成：
+在 `wire.classPrefix = Sparrow`、`wire.model.paramSuffix = BySparrow`、`wire.model.nameRule = base64`
+时，生成：
 
 ```kotlin
 data class SparrowDemoLoginWire(
@@ -122,7 +107,8 @@ data class SparrowDemoLoginWire(
 ) : BaseRequest()
 ```
 
-生成文件在 `app/build/generated/ksp/<variant>/kotlin/` 下，与规格同一个包（除非设置了 `wire.packageName`）。嵌套规格使用短名和 `import`，不写全限定名。
+生成文件在 `app/build/generated/ksp/<variant>/kotlin/` 下，与规格同一个包（除非设置了
+`wire.packageName`）。嵌套规格使用短名和 `import`，不写全限定名。
 
 开启 `wire.model.mappingFile` 后，还会生成一份对照 JSON（路径由该参数决定），结构如下：
 
@@ -131,7 +117,11 @@ data class SparrowDemoLoginWire(
   "com.example.SparrowDemoLoginWire": {
     "source": "com.example.DemoLogin",
     "fields": [
-      { "semantic": "phone", "param": "phoneBySparrow", "wire": "cGhvbmU" }
+      {
+        "semantic": "phone",
+        "param": "phoneBySparrow",
+        "wire": "cGhvbmU"
+      }
     ]
   }
 }
@@ -152,12 +142,12 @@ val forcedVar: String? = null
 
 `@WireField` 还可以改单个属性：
 
-| 参数 | 作用 |
-| --- | --- |
-| `key` | 参与算法的语义名。空字符串表示用属性名 |
-| `raw` | 非空时直接作为 `@SerializedName`，跳过算法和编码器 |
-| `defaultCode` | 规格上没有 `=` 时，用这段 Kotlin 表达式作为默认值 |
-| `mutable` | 见上 |
+| 参数          | 作用                                               |
+|---------------|----------------------------------------------------|
+| `key`         | 参与算法的语义名。空字符串表示用属性名             |
+| `raw`         | 非空时直接作为 `@SerializedName`，跳过算法和编码器 |
+| `defaultCode` | 规格上没有 `=` 时，用这段 Kotlin 表达式作为默认值  |
+| `mutable`     | 见上                                               |
 
 生成参数名不能与父类已有成员同名，否则 KSP 报错。
 
@@ -165,13 +155,13 @@ val forcedVar: String? = null
 
 参与计算的是语义名（属性名或 `WireField.key`），不是加过前后缀的参数名。
 
-| 规则 | 结果 |
-| --- | --- |
-| `raw` | 语义名原样 |
-| `base64` | URL-safe Base64，去掉填充。`phone` → `cGhvbmU` |
-| `reverse` | 反转语义名 |
-| `xor` | UTF-8 字节与 xorKey 循环异或，输出小写十六进制。密钥不能为空 |
-| `dict` | 查 dict 文件。缺键则报错 |
+| 规则      | 结果                                                         |
+|-----------|--------------------------------------------------------------|
+| `raw`     | 语义名原样                                                   |
+| `base64`  | URL-safe Base64，去掉填充。`phone` → `cGhvbmU`               |
+| `reverse` | 反转语义名                                                   |
+| `xor`     | UTF-8 字节与 xorKey 循环异或，输出小写十六进制。密钥不能为空 |
+| `dict`    | 查 dict 文件。缺键则报错                                     |
 
 字典文件示例：
 
@@ -198,7 +188,8 @@ abstract class PhoneBook(
 
 ## 自定义算法
 
-实现 `WireNameEncoder`，类要有公开的无参构造。编码器放在独立模块里，同时加入 `ksp` 依赖。写在 app 源码里时，KSP 加载不到它。
+实现 `WireNameEncoder`，类要有公开的无参构造。编码器放在独立模块里，同时加入 `ksp` 依赖。写在 app
+源码里时，KSP 加载不到它。
 
 ```kotlin
 class PrefixNameEncoder : WireNameEncoder {
@@ -257,19 +248,21 @@ object SparrowApiConstants {
 }
 ```
 
-默认按 `/` **分段**编码（`wire.path.encodeMode=segment`）；`whole` 则对整条路径一次编码。空段（首尾 `/`、`//`）会保留。
+默认按 `/` **分段**编码（`wire.path.encodeMode=segment`）；`whole` 则对整条路径一次编码。空段（首尾 `/`、
+`//`）会保留。
 
-| 参数 | 作用 |
-| --- | --- |
-| `wire.path.classPrefix` / `wire.path.classSuffix` / `wire.path.packageName` | 生成 object 名与包。未配置时回退到对应 `wire.*` |
-| `wire.path.nameRule` | `raw` / `base64` / `reverse` / `xor` / `dict`，默认 `raw` |
-| `wire.path.nameEncoder` | 自定义算法全限定类名（与模型共用 `WireNameEncoder`） |
-| `wire.path.xorKey` | 未配时回退 `wire.model.xorKey` |
-| `wire.path.dict` | `dict` 用的 properties（键是 path 段或整段，取决于 encodeMode） |
-| `wire.path.mappingFile` | 对照 JSON，建议写到 `build/` 绝对路径 |
-| `wire.path.encodeMode` | `segment`（默认）或 `whole` |
+| 参数                                                                        | 作用                                                            |
+|-----------------------------------------------------------------------------|-----------------------------------------------------------------|
+| `wire.path.classPrefix` / `wire.path.classSuffix` / `wire.path.packageName` | 生成 object 名与包。未配置时回退到对应 `wire.*`                 |
+| `wire.path.nameRule`                                                        | `raw` / `base64` / `reverse` / `xor` / `dict`，默认 `raw`       |
+| `wire.path.nameEncoder`                                                     | 自定义算法全限定类名（与模型共用 `WireNameEncoder`）            |
+| `wire.path.xorKey`                                                          | 未配时回退 `wire.model.xorKey`                                  |
+| `wire.path.dict`                                                            | `dict` 用的 properties（键是 path 段或整段，取决于 encodeMode） |
+| `wire.path.mappingFile`                                                     | 对照 JSON，建议写到 `build/` 绝对路径                           |
+| `wire.path.encodeMode`                                                      | `segment`（默认）或 `whole`                                     |
 
-选择顺序与模型侧相同：`ApiPath.raw` → 规格 `pathEncoder` → 规格显式 `pathRule` → 全局 `wire.path.nameEncoder` → 全局 `wire.path.nameRule`。
+选择顺序与模型侧相同：`ApiPath.raw` → 规格 `pathEncoder` → 规格显式 `pathRule` → 全局
+`wire.path.nameEncoder` → 全局 `wire.path.nameRule`。
 
 对照 JSON 示例（`wire.path.mappingFile`）：
 
@@ -278,7 +271,11 @@ object SparrowApiConstants {
   "com.example.SparrowApiConstants": {
     "source": "com.example.ApiConstants",
     "paths": [
-      { "name": "GET_APP_CONFIG_PATH", "semantic": "api/app/ext/config/getApp", "wire": "e/squill/nance/yew/lentil" }
+      {
+        "name": "GET_APP_CONFIG_PATH",
+        "semantic": "api/app/ext/config/getApp",
+        "wire": "e/squill/nance/yew/lentil"
+      }
     ]
   }
 }
@@ -286,7 +283,9 @@ object SparrowApiConstants {
 
 ## 本仓库示例
 
-规格在 `app/src/main/java/com/wiregen/sample/model/WireModelSpec.kt` 与 `constants/ApiConstants.kt`。全局参数在 `app/build.gradle.kts`。字典在 `app/wire-names.properties` 与 `app/path-names.properties`。示例编码器是 `:wire-encoder` 的 `PrefixNameEncoder`。
+规格在 `app/src/main/java/com/wiregen/sample/model/WireModelSpec.kt` 与 `constants/ApiConstants.kt`
+。全局参数在 `app/build.gradle.kts`。字典在 `app/wire-names.properties` 与 `app/path-names.properties`
+。示例编码器是 `:wire-encoder` 的 `PrefixNameEncoder`。
 
 ## 限制
 
